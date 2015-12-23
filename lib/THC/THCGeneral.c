@@ -3,7 +3,7 @@
 #include "THCTensorRandom.h"
 #include "THCBlas.h"
 #include "THCAllocator.h"
-
+#include "stdio.h"
 /* Size of scratch space available in global memory per each SM + stream */
 #define GLOBAL_SCRATCH_SPACE_PER_SM_STREAM 4 * sizeof(float)
 
@@ -584,6 +584,7 @@ void THCSetGCHandler(THCState *state, void (*cutorchGCFunction_)(void *data), vo
 cudaError_t THCudaMalloc(THCState *state, void** ptr, size_t size)
 {
   THCudaCheck(cudaGetLastError());
+  printf ("%d---------------------------\n", size);
   cudaError_t err = cudaMalloc(ptr, size);
   if (state->cutorchGCFunction != NULL && err != cudaSuccess) {
     cudaGetLastError(); // reset OOM error
