@@ -584,7 +584,9 @@ void THCSetGCHandler(THCState *state, void (*cutorchGCFunction_)(void *data), vo
 cudaError_t THCudaMalloc(THCState *state, void** ptr, size_t size)
 {
   THCudaCheck(cudaGetLastError());
-  printf ("%d---------------------------\n", size);
+  static int total_mem;
+  total_mem += size;
+  printf ("%d---------------------------\n", total_mem/1024^2);
   cudaError_t err = cudaMalloc(ptr, size);
   if (state->cutorchGCFunction != NULL && err != cudaSuccess) {
     cudaGetLastError(); // reset OOM error
