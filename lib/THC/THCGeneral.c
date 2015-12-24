@@ -21,7 +21,7 @@ int total_mem;
 void savePtr(void * ptr, int size)
 {
 	int hash = (int)ptr % 10000;
-	printf("%d", hash);
+	//printf("%d", hash);
 	node * iter = record[hash];
 	node *p = (node *)malloc(sizeof(node));
 	p->ptr = ptr;
