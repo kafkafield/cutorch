@@ -649,8 +649,8 @@ cudaError_t THCudaMalloc(THCState *state, void** ptr, size_t size)
     (state->cutorchGCFunction)(state->cutorchGCData);
     err = cudaMalloc(ptr, size);
   }
-  printf ("Alloc %d Mb\n", size/1024^2);
-  printf("Memory Usage %d Mb\n", total_mem/1024^2);
+  printf ("Alloc %d Mb\n", size/1024/1024);
+  printf("Memory Usage %d Mb\n", total_mem/1024/1024);
   savePtr(*ptr, size);
   return err;
 }
@@ -659,8 +659,8 @@ cudaError_t THCudaFree(THCState *state, void *ptr)
 {
   cudaError_t err = cudaFree(ptr);
   int fr = getPtr(ptr);
-  printf("Free %d Mb\n", fr/1024^2);
-  printf("Memory Usage %d Mb\n", total_mem/1024^2);
+  printf("Free %d Mb\n", fr/1024/1024);
+  printf("Memory Usage %d Mb\n", total_mem/1024/1024);
   total_mem -= fr;
   return err;
 }
