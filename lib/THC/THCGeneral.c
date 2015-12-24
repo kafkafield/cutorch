@@ -7,6 +7,61 @@
 /* Size of scratch space available in global memory per each SM + stream */
 #define GLOBAL_SCRATCH_SPACE_PER_SM_STREAM 4 * sizeof(float)
 
+#include <stdlib.h>
+typedef struct node {
+	void* ptr;
+	int size;
+	struct node * next;
+}node;
+
+node * record[10005];
+
+void savePtr(void * ptr, int size)
+{
+	int hash = (int)ptr % 10000;
+	node * iter = record[hash];
+	node *p = (node *)malloc(sizeof(node));
+	p->ptr = ptr;
+	p->size = size;
+	p->next = NULL;
+	if (iter == NULL)
+	{
+		record[hash] = p;
+	}
+	else
+	{
+		while (iter->next != NULL)
+			iter = iter->next;
+		iter->next = p;
+	}
+}
+
+int getPtr(void * ptr)
+{
+	int res = 0;
+	int hash = (int)ptr % 10000;
+	node * iter = record[hash];
+	if (iter->ptr == ptr)
+	{
+		res = iter->size;
+		record[hash] = iter->next;
+		free(iter);
+		return res;
+	}
+	while (iter->next != NULL)
+	{
+		if (iter->next->ptr == ptr)
+		{
+			res = iter->next->size;
+			node * p = iter->next;
+			iter->next = iter->next->next;
+			free(p);
+			return res;
+		}
+		iter = iter->next;
+	}
+}
+
 THCCudaResourcesPerDevice* THCState_getDeviceResourcePtr(
   THCState *state, int device);
 
@@ -586,7 +641,9 @@ cudaError_t THCudaMalloc(THCState *state, void** ptr, size_t size)
   THCudaCheck(cudaGetLastError());
   static int total_mem;
   total_mem += size;
-  printf ("%d---------------------------\n", total_mem/1024^2);
+  printf ("Alloc %d Mb\n", size/1024^2);
+  printf("Memory Usage %d Mb\n", total_mem/1024^2);
+  savePtr(*ptr, size);
   cudaError_t err = cudaMalloc(ptr, size);
   if (state->cutorchGCFunction != NULL && err != cudaSuccess) {
     cudaGetLastError(); // reset OOM error
@@ -599,6 +656,10 @@ cudaError_t THCudaMalloc(THCState *state, void** ptr, size_t size)
 cudaError_t THCudaFree(THCState *state, void *ptr)
 {
   cudaError_t err = cudaFree(ptr);
+  int fr = getPtr(ptr);
+  printf("Free %d Mb\n", fr/1024^2);
+  printf("Memory Usage %d Mb\n", total_mem/1024^2);
+  total_mem -= fr;
   return err;
 }
 
