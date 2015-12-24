@@ -643,15 +643,15 @@ cudaError_t THCudaMalloc(THCState *state, void** ptr, size_t size)
 {
   THCudaCheck(cudaGetLastError());
   total_mem += size;
-  printf ("Alloc %d Mb\n", size/1024^2);
-  printf("Memory Usage %d Mb\n", total_mem/1024^2);
-  savePtr(*ptr, size);
   cudaError_t err = cudaMalloc(ptr, size);
   if (state->cutorchGCFunction != NULL && err != cudaSuccess) {
     cudaGetLastError(); // reset OOM error
     (state->cutorchGCFunction)(state->cutorchGCData);
     err = cudaMalloc(ptr, size);
   }
+  printf ("Alloc %d Mb\n", size/1024^2);
+  printf("Memory Usage %d Mb\n", total_mem/1024^2);
+  savePtr(*ptr, size);
   return err;
 }
 
