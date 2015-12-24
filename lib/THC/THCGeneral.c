@@ -6,6 +6,8 @@
 #include "stdio.h"
 /* Size of scratch space available in global memory per each SM + stream */
 #define GLOBAL_SCRATCH_SPACE_PER_SM_STREAM 4 * sizeof(float)
+#define MEM_DEBUG_CLOSE 0
+#define MEM_DEBUG_OPEN 1
 
 #include <stdlib.h>
 typedef struct node {
@@ -17,6 +19,7 @@ typedef struct node {
 node * record[10005];
 
 int total_mem;
+int mem_debug;
 
 void savePtr(void * ptr, int size)
 {
@@ -642,26 +645,32 @@ void THCSetGCHandler(THCState *state, void (*cutorchGCFunction_)(void *data), vo
 cudaError_t THCudaMalloc(THCState *state, void** ptr, size_t size)
 {
   THCudaCheck(cudaGetLastError());
-  total_mem += size;
   cudaError_t err = cudaMalloc(ptr, size);
   if (state->cutorchGCFunction != NULL && err != cudaSuccess) {
     cudaGetLastError(); // reset OOM error
     (state->cutorchGCFunction)(state->cutorchGCData);
     err = cudaMalloc(ptr, size);
   }
-  printf ("Alloc %d Mb\n", size/1024/1024);
-  printf("Memory Usage %d Mb\n", total_mem/1024/1024);
-  savePtr(*ptr, size);
+  if(mem_debug == MEM_DEBUG_OPEN)
+  {
+      total_mem += size;
+      printf ("Alloc %d Mb\n", size/1024/1024);
+      printf("Memory Usage %d Mb\n", total_mem/1024/1024);
+      savePtr(*ptr, size);
+  }
   return err;
 }
 
 cudaError_t THCudaFree(THCState *state, void *ptr)
 {
   cudaError_t err = cudaFree(ptr);
-  int fr = getPtr(ptr);
-  printf("Free %d Mb\n", fr/1024/1024);
-  printf("Memory Usage %d Mb\n", total_mem/1024/1024);
-  total_mem -= fr;
+  if(mem_debug == MEM_DEBUG_OPEN)
+  {
+      int fr = getPtr(ptr);
+      printf("Free %d Mb\n", fr/1024/1024);
+      printf("Memory Usage %d Mb\n", total_mem/1024/1024);
+      total_mem -= fr;
+  }
   return err;
 }
 
