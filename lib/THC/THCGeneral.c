@@ -16,6 +16,8 @@ typedef struct node {
 
 node * record[10005];
 
+int total_mem;
+
 void savePtr(void * ptr, int size)
 {
 	int hash = (int)ptr % 10000;
@@ -639,7 +641,6 @@ void THCSetGCHandler(THCState *state, void (*cutorchGCFunction_)(void *data), vo
 cudaError_t THCudaMalloc(THCState *state, void** ptr, size_t size)
 {
   THCudaCheck(cudaGetLastError());
-  static int total_mem;
   total_mem += size;
   printf ("Alloc %d Mb\n", size/1024^2);
   printf("Memory Usage %d Mb\n", total_mem/1024^2);
